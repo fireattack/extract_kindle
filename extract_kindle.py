@@ -28,7 +28,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("filepath")
     parser.add_argument(
-        "-k", "--keep", action='store_true', help="keep temp files")
+        "-k", "--keep", action='store_true', help="keep temp and useless files")
     parser.add_argument(
         "-p",
         "--pause-at-end",
@@ -64,15 +64,13 @@ def main():
                 if (splitext(f)[1].lower() in ['.unknown']):
                     print(f'Removing {f}..')
                     remove(join('temp\\images', f))
-
             imgs = [
                 f for f in listdir('temp\\images')
                 if (splitext(f)[1].lower() in ['.jpeg', '.jpg'])
             ]
             print(f'Removing {imgs[-1]}..')
             remove(join('temp\\images', imgs[-1]))
-
-        if not args.keep:
+            # Remove deDRMed file.
             remove(azwFileDeDrmed)
     else:
         errMsg = 'No or more than one .azw file found!'
@@ -105,7 +103,7 @@ def main():
                     join('azw6_images', img),
                     lowqImage.replace('.jpeg', '.hd.jpeg'))
     else:
-        print('No or more than one .res file found.')
+        print('No or more than one .res file found. Not processed.')
 
     # Find the title of the ebook from the HTML files.
     with open('temp\\metadata.opf', 'r', encoding='utf8') as f:
