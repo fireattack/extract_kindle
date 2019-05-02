@@ -102,7 +102,7 @@ def main():
         print('No or more than one .res file found.')
 
     # Find the title of the ebook from the HTML files.
-    with open('dir\\metadata.opf', 'r', encoding='utf8') as f:
+    with open('temp\\metadata.opf', 'r', encoding='utf8') as f:
         metadata = f.read()
     title = re.search(
         r'<dc:title>(.+?)</dc:title>', metadata,
