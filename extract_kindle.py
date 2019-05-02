@@ -58,12 +58,19 @@ def main():
             f for f in listdir('.') if f.endswith('_nodrm.azw3'))
         run([CALIBRE_PATH, '-x', azwFileDeDrmed, 'temp'])
 
-        # Clean up `images` folder
-        imgs = [
-            f for f in listdir('temp\\images')
-            if (splitext(f)[1].lower() in ['.jpeg', '.jpg'])
-        ]
-        remove(imgs[-1])
+        if not args.keep:
+            # Clean up `images` folder
+            for f in listdir('temp\\images'):
+                if (splitext(f)[1].lower() in ['.unknown']):
+                    print(f'Removing {f}..')
+                    remove(join('temp\\images', f))
+
+            imgs = [
+                f for f in listdir('temp\\images')
+                if (splitext(f)[1].lower() in ['.jpeg', '.jpg'])
+            ]
+            print(f'Removing {imgs[-1]}..')
+            remove(join('temp\\images', imgs[-1]))
 
         if not args.keep:
             remove(azwFileDeDrmed)
