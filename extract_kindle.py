@@ -10,7 +10,7 @@ import argparse
 
 LIB_PATH = join(dirname(sys.argv[0]), 'lib')
 DEDRM_PATH = join(LIB_PATH, R'DeDRM_App\DeDRM_lib\DeDRM_App.pyw')
-EBOOKCONVERT_PATH = R'C:\Program Files (x86)\Calibre2\ebook-convert.exe'
+EBOOKCONVERT_PATH = R'C:\Program Files (x86)\Calibre2\calibre-debug.exe'
 
 
 def changeCodePageBack():
@@ -59,14 +59,11 @@ def main():
 
         azwFileDeDrmed = next(
             f for f in listdir('.') if f.endswith('_nodrm.azw3'))
-
-        run(f'"{EBOOKCONVERT_PATH}" "{azwFileDeDrmed}" temp.zip --extract-to dir'
-            )
+        subprocess.run([EBOOKCONVERT_PATH, '-x', azwFileDeDrmed, 'temp'])
         # Ebook-convert.exe used to have a bug that always changes chcp to 65001, which breaks `print()` in Python badly. 
         # So we change it back manually. I keep it even after the bug is fixed just to be safe.
         changeCodePageBack()
         if not args.keep:
-            remove('temp.zip')
             remove(azwFileDeDrmed)
     else:
         errMsg = 'No or more than one .azw file found!'
@@ -93,7 +90,7 @@ def main():
         ]
 
         for img in hdImages:
-            lowqImage = join('dir\\temp_files\\images',
+            lowqImage = join('temp\\images',
                              img.replace('HDimage', ''))
             if exists(lowqImage):
                 print(f'Replacing {lowqImage} with {img}..')
@@ -105,21 +102,21 @@ def main():
         print('No or more than one .res file found.')
 
     # Find the title of the ebook from the HTML files.
-    with open('dir\\temp.html', 'r', encoding='utf8') as f:
-        html = f.read()
+    with open('dir\\metadata.opf', 'r', encoding='utf8') as f:
+        metadata = f.read()
     title = re.search(
-        r'name="DC\.title"  content="(.+?)"', html,
+        r'<dc:title>(.+?)</dc:title>', metadata,
         flags=re.DOTALL)[1].strip()
 
     for c in R'<>:"\/|?*':  # Windows-safe filename
         title = title.replace(c, '_')
-    rename('dir\\temp_files\\images', title)
+    rename('temp\\images', title)
 
     # Create an empty file to keep the filename.
     # Eeaier to recognize which ebook is which after moving/removing the extracted files.
     open(title + '.txt', 'a').close()
     if not args.keep:
-        rmtree('dir')
+        rmtree('temp')
     if exists('azw6_images') and not args.keep:
         rmtree('azw6_images')
     if args.pause_at_end:
