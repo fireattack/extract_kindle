@@ -27,10 +27,13 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("filepath")
-    parser.add_argument("-k", "--keep", action='store_true',
-                        help="keep temp files")
-    parser.add_argument("-p", "--pause-at-end",
-                        action='store_true', help="pause on error or finish")
+    parser.add_argument(
+        "-k", "--keep", action='store_true', help="keep temp files")
+    parser.add_argument(
+        "-p",
+        "--pause-at-end",
+        action='store_true',
+        help="pause on error or finish")
     args = parser.parse_args()
 
     if exists(args.filepath):
@@ -55,6 +58,13 @@ def main():
             f for f in listdir('.') if f.endswith('_nodrm.azw3'))
         run([CALIBRE_PATH, '-x', azwFileDeDrmed, 'temp'])
 
+        # Clean up `images` folder
+        imgs = [
+            f for f in listdir('temp\\images')
+            if (splitext(f)[1].lower() in ['.jpeg', '.jpg'])
+        ]
+        remove(imgs[-1])
+
         if not args.keep:
             remove(azwFileDeDrmed)
     else:
@@ -65,10 +75,7 @@ def main():
             print(errMsg)
         return
 
-    resFile = [
-        f for f in listdir('.')
-        if (splitext(f)[1].lower() in ['.res'])
-    ]
+    resFile = [f for f in listdir('.') if (splitext(f)[1].lower() in ['.res'])]
 
     if len(resFile) == 1:
 
@@ -82,14 +89,14 @@ def main():
         ]
 
         for img in hdImages:
-            lowqImage = join('temp\\images',
-                             img.replace('HDimage', ''))
+            lowqImage = join('temp\\images', img.replace('HDimage', ''))
             if exists(lowqImage):
                 print(f'Replacing {lowqImage} with {img}..')
                 if not args.keep:
                     remove(lowqImage)
-                rename(join('azw6_images', img),
-                       lowqImage.replace('.jpeg', '.hd.jpeg'))
+                rename(
+                    join('azw6_images', img),
+                    lowqImage.replace('.jpeg', '.hd.jpeg'))
     else:
         print('No or more than one .res file found.')
 
@@ -97,8 +104,7 @@ def main():
     with open('temp\\metadata.opf', 'r', encoding='utf8') as f:
         metadata = f.read()
     title = re.search(
-        r'<dc:title>(.+?)</dc:title>', metadata,
-        flags=re.DOTALL)[1].strip()
+        r'<dc:title>(.+?)</dc:title>', metadata, flags=re.DOTALL)[1].strip()
 
     for c in R'<>:"\/|?*':  # Windows-safe filename
         title = title.replace(c, '_')
