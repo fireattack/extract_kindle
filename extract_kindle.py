@@ -10,18 +10,18 @@ import argparse
 
 LIB_PATH = join(dirname(sys.argv[0]), 'lib')
 DEDRM_PATH = join(LIB_PATH, R'DeDRM_App\DeDRM_lib\DeDRM_App.pyw')
-EBOOKCONVERT_PATH = R'C:\Program Files (x86)\Calibre2\calibre-debug.exe'
+CALIBRE_PATH = R'C:\Program Files (x86)\Calibre2\calibre-debug.exe'
 
 
-def run(cmdStr):
+def run(cmdArr):
 
-    print(cmdStr)
-    subprocess.call(cmdStr)
+    print(cmdArr)
+    subprocess.run(cmdArr)
 
 
 def main():
 
-    if not exists(EBOOKCONVERT_PATH):
+    if not exists(CALIBRE_PATH):
         input('No calibre (ebook-convert.exe) found!')
         return 0
 
@@ -49,11 +49,11 @@ def main():
 
     if len(azwFile) == 1:
         print(f'Processing {azwFile[0]}')
-        run(f'py -2 "{DEDRM_PATH}" "{azwFile[0]}"')
+        run(['py', '-2', DEDRM_PATH, azwFile[0]])
 
         azwFileDeDrmed = next(
             f for f in listdir('.') if f.endswith('_nodrm.azw3'))
-        subprocess.run([EBOOKCONVERT_PATH, '-x', azwFileDeDrmed, 'temp'])
+        run([CALIBRE_PATH, '-x', azwFileDeDrmed, 'temp'])
 
         if not args.keep:
             remove(azwFileDeDrmed)
