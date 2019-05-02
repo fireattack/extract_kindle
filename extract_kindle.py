@@ -13,11 +13,6 @@ DEDRM_PATH = join(LIB_PATH, R'DeDRM_App\DeDRM_lib\DeDRM_App.pyw')
 EBOOKCONVERT_PATH = R'C:\Program Files (x86)\Calibre2\calibre-debug.exe'
 
 
-def changeCodePageBack():
-    cp = locale.getpreferredencoding().replace('cp', '')
-    system('chcp '+cp)
-
-
 def run(cmdStr):
 
     print(cmdStr)
@@ -25,7 +20,6 @@ def run(cmdStr):
 
 
 def main():
-    changeCodePageBack()
 
     if not exists(EBOOKCONVERT_PATH):
         input('No calibre (ebook-convert.exe) found!')
@@ -60,9 +54,7 @@ def main():
         azwFileDeDrmed = next(
             f for f in listdir('.') if f.endswith('_nodrm.azw3'))
         subprocess.run([EBOOKCONVERT_PATH, '-x', azwFileDeDrmed, 'temp'])
-        # Ebook-convert.exe used to have a bug that always changes chcp to 65001, which breaks `print()` in Python badly. 
-        # So we change it back manually. I keep it even after the bug is fixed just to be safe.
-        changeCodePageBack()
+
         if not args.keep:
             remove(azwFileDeDrmed)
     else:
