@@ -7,7 +7,7 @@ from __future__ import with_statement
 # Copyright © 2008-2017 Apprentice Harper et al.
 
 __license__ = 'GPL v3'
-__version__ = '2.5'
+__version__ = '2.6'
 
 # Revision history:
 #  1.0   - Kindle info file decryption, extracted from k4mobidedrm, etc.
@@ -28,6 +28,7 @@ __version__ = '2.5'
 #  2.3   - Added more field names thanks to concavegit's KFX code.
 #  2.4   - Fix for complex Mac disk setups, thanks to Tibs
 #  2.5   - Final Fix for Windows user names with non-ascii characters, thanks to oneofusoneofus
+#  2.6   - Start adding support for Kindle 2.25+ .kinf2018 file
 
 
 """
@@ -124,25 +125,27 @@ def SHA256(message):
     return ctx.digest()
 
 # For K4M/PC 1.6.X and later
-# generate table of prime number less than or equal to int n
 def primes(n):
-    if n==2: return [2]
-    elif n<2: return []
-    s=range(3,n+1,2)
-    mroot = n ** 0.5
-    half=(n+1)/2-1
-    i=0
-    m=3
-    while m <= mroot:
-        if s[i]:
-            j=(m*m-3)/2
-            s[j]=0
-            while j<half:
-                s[j]=0
-                j+=m
-        i=i+1
-        m=2*i+3
-    return [2]+[x for x in s if x]
+    """
+    Return a list of prime integers smaller than or equal to n
+    :param n: int
+    :return: list->int
+    """
+    if n == 2:
+        return [2]
+    elif n < 2:
+        return []
+    primeList = [2]
+
+    for potentialPrime in range(3, n + 1, 2):
+        isItPrime = True
+        for prime in primeList:
+            if potentialPrime % prime == 0:
+                isItPrime = False
+        if isItPrime is True:
+            primeList.append(potentialPrime)
+
+    return primeList
 
 # Encode the bytes in data with the characters in map
 def encode(data, map):
@@ -971,6 +974,13 @@ if iswindows:
             # Probably not the best. To Fix (shouldn't ignore in encoding) or use utf-8
             print(u'searching for kinfoFiles in ' + path.encode('ascii', 'ignore'))
 
+            # look for (K4PC 2.25.1and later) .kinf2018 file
+            kinfopath = path +'\\Amazon\\Kindle\\storage\\.kinf2018'
+            if os.path.isfile(kinfopath):
+                found = True
+                print('Found K4PC 2.25+ kinf2018 file: ' + kinfopath.encode('ascii','ignore'))
+                kInfoFiles.append(kinfopath)
+                
             # look for (K4PC 1.9.0 and later) .kinf2011 file
             kinfopath = path +'\\Amazon\\Kindle\\storage\\.kinf2011'
             if os.path.isfile(kinfopath):
