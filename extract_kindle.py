@@ -10,7 +10,7 @@ import argparse
 
 LIB_PATH = join(dirname(sys.argv[0]), 'lib')
 DEDRM_PATH = join(LIB_PATH, R'DeDRM_App\DeDRM_lib\DeDRM_App.pyw')
-CALIBRE_PATH = R'C:\Program Files (x86)\Calibre2\calibre-debug.exe'
+CALIBRE_PATH = 'calibre-debug.exe' # Assuming in path already. R'C:\Program Files (x86)\Calibre2\calibre-debug.exe'
 
 
 def run(cmdArr):
