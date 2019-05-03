@@ -4,7 +4,7 @@ import sys
 import locale
 from os import chdir, listdir, makedirs, remove, rename, walk, system
 from os.path import basename, dirname, exists, isdir, isfile, join, splitext
-from shutil import rmtree
+from shutil import rmtree, which
 import DumpAZW6_py3
 import argparse
 
@@ -21,8 +21,8 @@ def run(cmdArr):
 
 def main():
 
-    if not exists(CALIBRE_PATH):
-        input('No calibre (ebook-convert.exe) found!')
+    if not which(CALIBRE_PATH):
+        input('No calibre (calibre-debug.exe) found!')
         return 0
 
     parser = argparse.ArgumentParser()
