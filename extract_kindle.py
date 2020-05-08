@@ -1,22 +1,14 @@
 import re
-import subprocess
+from subprocess import run
 import sys
-import locale
-from os import chdir, listdir, makedirs, remove, rename, walk, system
-from os.path import basename, dirname, exists, isdir, isfile, join, splitext
 from shutil import rmtree, which
 import DumpAZW6_py3
 import argparse
+from pathlib import Path
 
-LIB_PATH = join(dirname(sys.argv[0]), 'lib')
-DEDRM_PATH = join(LIB_PATH, R'DeDRM_App\DeDRM_lib\DeDRM_App.pyw')
+LIB_PATH = Path(__file__).parent / 'lib'
+DEDRM_PATH = LIB_PATH / R'DeDRM_App\DeDRM_lib\DeDRM_App.pyw'
 CALIBRE_PATH = 'calibre-debug.exe' # Assuming in path already. R'C:\Program Files (x86)\Calibre2\calibre-debug.exe'
-
-
-def run(cmdArr):
-
-    print(cmdArr)
-    subprocess.run(cmdArr)
 
 
 def main():
@@ -36,42 +28,32 @@ def main():
         help="pause on error or finish")
     args = parser.parse_args()
 
-    if exists(args.filepath):
-        myPath = args.filepath
-    else:
+    p = Path(args.filepath)
+    if not p.exists:
         print('Please provide a path to work on!')
         return 0
 
-    print(f'Folder: {myPath}')
-    chdir(myPath)  # Change working dir
+    print(f'Folder: {p}')
 
-    azwFile = [
-        f for f in listdir('.')
-        if (splitext(f)[1].lower() in ['.azw', '.azw3'])
-    ]
+    azwFile = [f for f in p.iterdir() if (f.suffix.lower() in ['.azw', '.azw3'])]
 
     if len(azwFile) == 1:
         print(f'Processing {azwFile[0]}')
         run(['py', '-2', DEDRM_PATH, azwFile[0]])
-
-        azwFileDeDrmed = next(
-            f for f in listdir('.') if f.endswith('_nodrm.azw3'))
-        run([CALIBRE_PATH, '-x', azwFileDeDrmed, 'temp'])
+        temp_folder = p / 'temp'
+        azwFileDeDrmed = next(f for f in p.iterdir() if f.name.endswith('_nodrm.azw3'))
+        run([CALIBRE_PATH, '-x', azwFileDeDrmed, temp_folder])
 
         if not args.keep:
             # Clean up `images` folder
-            for f in listdir('temp\\images'):
-                if (splitext(f)[1].lower() in ['.unknown']):
+            for f in (temp_folder / 'images').iterdir():
+                if f.suffix.lower() in ['.unknown']:
                     print(f'Removing {f}..')
-                    remove(join('temp\\images', f))
-            imgs = [
-                f for f in listdir('temp\\images')
-                if (splitext(f)[1].lower() in ['.jpeg', '.jpg'])
-            ]
+                    f.unlink()                
+            imgs = [f for f in (temp_folder / 'images').iterdir() if f.suffix.lower() in ['.jpeg', '.jpg']]
             print(f'Removing {imgs[-1]}..')
-            remove(join('temp\\images', imgs[-1]))
-            # Remove deDRMed file.
-            remove(azwFileDeDrmed)
+            imgs[-1].unlink() # Remove the last image which is always a cover thumbnail.
+            azwFileDeDrmed.unlink() # Remove deDRMed file.
     else:
         errMsg = 'No or more than one .azw file found!'
         if args.pause_at_end:
@@ -80,48 +62,42 @@ def main():
             print(errMsg)
         return
 
-    resFile = [f for f in listdir('.') if (splitext(f)[1].lower() in ['.res'])]
+    resFile = [f for f in p.iterdir() if (f.suffix.lower() in ['.res'])]
 
     if len(resFile) == 1:
 
         print(f'Processing {resFile[0]}')
+        DumpAZW6_py3.main(['DumpAZW6_py3.py', str(resFile[0])])
 
-        DumpAZW6_py3.main(['DumpAZW6_py3.py', resFile[0]])
-
-        hdImages = [
-            f for f in listdir('azw6_images')
-            if (splitext(f)[1].lower() in ['.jpeg', '.jpg'])
-        ]
-
+        hdImages = [f for f in (p / 'azw6_images').iterdir() if f.suffix.lower() in ['.jpeg', '.jpg']]
         for img in hdImages:
-            lowqImage = join('temp\\images', img.replace('HDimage', ''))
-            if exists(lowqImage):
-                print(f'Replacing {lowqImage} with {img}..')
+            lowq_img = temp_folder / 'images' / img.name.replace('HDimage', '')
+            if lowq_img.exists():
+                print(f'Replacing {lowq_img.name} with {img.name}..')
                 if not args.keep:
-                    remove(lowqImage)
-                rename(
-                    join('azw6_images', img),
-                    lowqImage.replace('.jpeg', '.hd.jpeg'))
+                    lowq_img.unlink()
+                img.rename(lowq_img.with_suffix('.hd.jpeg'))
     else:
         print('No or more than one .res file found. Not processed.')
 
     # Find the title of the ebook from the HTML files.
-    with open('temp\\metadata.opf', 'r', encoding='utf8') as f:
+    with (temp_folder / 'metadata.opf').open('r', encoding='utf8') as f:
         metadata = f.read()
     title = re.search(
         r'<dc:title>(.+?)</dc:title>', metadata, flags=re.DOTALL)[1].strip()
 
     for c in R'<>:"\/|?*':  # Windows-safe filename
         title = title.replace(c, '_')
-    rename('temp\\images', title)
+    (temp_folder / 'images').rename(p / title)
 
-    # Create an empty file to keep the filename.
+    # Create an empty file to keep track of the the filename.
     # Eeaier to recognize which ebook is which after moving/removing the extracted files.
-    open(title + '.txt', 'a').close()
+    (p / (title + '.txt')).open('a').close()
+    
     if not args.keep:
-        rmtree('temp')
-    if exists('azw6_images') and not args.keep:
-        rmtree('azw6_images')
+        rmtree(temp_folder)
+        if (p / 'azw6_images').exists():
+            rmtree(p / 'azw6_images')
     if args.pause_at_end:
         input('All done!')
 

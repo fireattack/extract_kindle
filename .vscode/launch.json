@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": [".\\test\\B07P177Y78_EBOK"]
+            "args": [".\\test\\B07WPTN6P1_EBOK"]
         },
         {
             "name": "Python: Attach",

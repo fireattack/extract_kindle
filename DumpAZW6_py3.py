@@ -28,14 +28,14 @@ def get_image_type(imgname, imgdata=None):
     return imgtype
 
 
-def processCRES(i, data):
+def processCRES(i, data, dir):
     data = data[12:]
     imgtype = get_image_type(None, data)
     if imgtype is None:
         print("        Warning: CRES Section %s does not contain a recognised resource" % i)
         imgtype = "dat"
     imgname = "HDimage%05d.%s" % (i, imgtype)
-    imgdir = os.path.join(".", "azw6_images")
+    imgdir = os.path.join(dir, "azw6_images")
     if not os.path.exists(imgdir):
         os.mkdir(imgdir)
     print("        Extracting HD image: {0:s} from section {1:d}".format(imgname,i))
@@ -358,7 +358,7 @@ def main(argv=sys.argv):
                 if dt == b"CONT":
                     desc="Cont Header"
                 elif dt == b"CRES":
-                    processCRES(i, data)
+                    processCRES(i, data, os.path.dirname(infile))
             else:
                 desc = dtext.hex()
                 desc = desc + " " + dtext.decode()
