@@ -67,12 +67,12 @@ def main(*input_args):
             deDRMed_azw_file.unlink() # Remove deDRMed file.
 
 
-    resFile = [f for f in p.iterdir() if (f.suffix.lower() in ['.res'])]
+    res_files = [f for f in p.iterdir() if (f.suffix.lower() in ['.res'])]
 
-    if len(resFile) == 1:
+    if len(res_files) == 1:
 
-        print(f'Processing resource file {resFile[0]}..')
-        DumpAZW6_py3.main(['DumpAZW6_py3.py', str(resFile[0])])
+        print(f'Processing resource file {res_files[0]}..')
+        DumpAZW6_py3.main(['DumpAZW6_py3.py', str(res_files[0])])
 
         hd_images = [f for f in (p / 'azw6_images').iterdir() if f.suffix.lower() in ['.jpeg', '.jpg']]
         for img in hd_images:
