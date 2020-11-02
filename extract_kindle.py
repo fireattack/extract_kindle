@@ -15,7 +15,7 @@ def main(*input_args):
 
     if not which(CALIBRE_PATH):
         input('No calibre (calibre-debug.exe) found!')
-        return 0
+        return 1
 
     parser = argparse.ArgumentParser()
     parser.add_argument("filepath")
@@ -86,12 +86,10 @@ def main(*input_args):
         print('No or more than one .res file found. Not processed.')
 
     # Find the title of the ebook from the metadata file.
-    with (temp_folder / 'metadata.opf').open('r', encoding='utf8') as f:
-        metadata = f.read()
-    title = re.search(
-        r'<dc:title>(.+?)</dc:title>', metadata, flags=re.DOTALL)[1].strip()
+    metadata = (temp_folder / 'metadata.opf').read_text(encoding='utf8')
+    title = re.search(r'<dc:title>(.+?)</dc:title>', metadata, flags=re.DOTALL)[1].strip()
 
-    for c in R'<>:"\/|?*' + '\r\n':  # Windows-safe filename
+    for c in '<>:"\/|?*\r\n\t':  # Windows-safe filename
         title = title.replace(c, '_')
     
     if args.output: 
