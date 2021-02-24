@@ -9,7 +9,7 @@ from pathlib import Path
 
 DEDRM_PATH = Path(__file__).parent / 'DeDRM_plugin'
 CALIBRE_PATH = 'calibre-debug.exe' # Assuming in path already. R'C:\Program Files (x86)\Calibre2\calibre-debug.exe'
-
+KEY = Path(__file__).parent / "kindlekey1.k4i"
 
 def main(*input_args):
 
@@ -47,9 +47,12 @@ def main(*input_args):
         deDRMed_azw_file = azw_files[0]
     elif len(azw_files) == 1:
         print(f'DeDRMing {azw_files[0].name}..')
-        if not Path("kindlekey1.k4i").exists():
+        if not KEY.exists():
             run(['py', DEDRM_PATH / 'kindlekey.py', Path(__file__).parent])
-        run(['py', DEDRM_PATH / 'k4mobidedrm.py', "-k", "kindlekey1.k4i", azw_files[0], p])
+        run(['py', DEDRM_PATH / 'k4mobidedrm.py', "-k", KEY, azw_files[0], p])
+        if not KEY.exists():
+            print('Failed to get key!')
+            return 1
         #from DeDRM_plugin_modified.k4mobidedrm import decryptBook
         #decryptBook(azw_files[0], str(p), ['kindlekey1.k4i'], [], [], [])
         temp_folder = p / 'temp'
