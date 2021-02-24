@@ -6,8 +6,8 @@ import DumpAZW6_py3
 import argparse
 from pathlib import Path
 
-LIB_PATH = Path(__file__).parent / 'lib'
-DEDRM_PATH = LIB_PATH / R'DeDRM_App\DeDRM_lib\DeDRM_App.pyw'
+
+DEDRM_PATH = Path(__file__).parent / 'DeDRM_plugin/k4mobidedrm.py'
 CALIBRE_PATH = 'calibre-debug.exe' # Assuming in path already. R'C:\Program Files (x86)\Calibre2\calibre-debug.exe'
 
 
@@ -26,7 +26,7 @@ def main(*input_args):
     args = parser.parse_args(input_args)
 
     p = Path(args.filepath)
-    if not p.exists:
+    if not p.exists():
         print('Please provide a path to work on!')
         return 1
 
@@ -47,7 +47,10 @@ def main(*input_args):
         deDRMed_azw_file = azw_files[0]
     elif len(azw_files) == 1:
         print(f'DeDRMing {azw_files[0].name}..')
-        run(['py', '-2', DEDRM_PATH, azw_files[0]])
+        run(['py', DEDRM_PATH, azw_files[0], p])
+
+        #from DeDRM_plugin_modified.k4mobidedrm import decryptBook
+        #decryptBook(azw_files[0], str(p), ['kindlekey1.k4i'], [], [], [])
         temp_folder = p / 'temp'
         deDRMed_azw_file = next(f for f in p.iterdir() if f.name.endswith('_nodrm.azw3'))
         deDRM = True # this flags that the deDRMed file is created by ourselves (wasn't there before). So we remove it later.
