@@ -5,32 +5,43 @@ from shutil import rmtree, which, move
 import DumpAZW6_py3
 import argparse
 from pathlib import Path
+import json 
 
 
 DEDRM_PATH = Path(__file__).parent / 'DeDRM_plugin'
-CALIBRE_PATH = 'calibre-debug.exe' # Assuming in path already. Modify it to yours such as R'C:\Program Files (x86)\Calibre2\calibre-debug.exe'
-RAR_PATH = R'C:\Program Files (x86)\WinRAR\Rar.exe' # Modify it to your Rar.exe. Or replace with 7z (but you also need to replace the arguments)
 KEY = Path(__file__).parent / "kindlekey1.k4i"
 
 def main(*input_args):
+    parser = argparse.ArgumentParser()
+    parser.add_argument("dir", help="choose the folder contains DRMed azw file(s)")
+    parser.add_argument("-k", "--keep", action='store_true', help="keep temp and useless files")
+    parser.add_argument("-z", "--compress", action='store_true', help="also compress the files")
+    parser.add_argument("-o", "--output", help="output folder (default: same as dir)")
+    args = parser.parse_args(input_args)
 
-    if not which(CALIBRE_PATH):
+    # load config
+    config = dict(calibre='calibre-debug.exe', rar=R'C:\Program Files (x86)\WinRAR\Rar.exe') # default
+    try:
+        config_file = Path(__file__).parent / 'config.json'
+        if config_file.exists():
+            with config_file.open('r', encoding='utf-8') as f:
+                config = json.load(f)
+            print('Loaded config from config.json')
+    except:
+        pass
+
+    if not which(config['calibre']):
         input('No calibre (calibre-debug.exe) found!')
         return 1
 
     has_rar = True
-    if not which(RAR_PATH):
+    if not which(config['rar']):
         input('No WinRAR (Rar.exe) found!')
         has_rar = True
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("filepath", help="choose the folder contains DRMed azw file(s)")
-    parser.add_argument("-k", "--keep", action='store_true', help="keep temp and useless files")
-    parser.add_argument("-z", "--compress", action='store_true', help="Also compress the files")
-    parser.add_argument("-o", "--output", help="choose output folder")
-    args = parser.parse_args(input_args)
 
-    p = Path(args.filepath)
+
+    p = Path(args.dir)
     if not p.exists():
         print('Please provide a path to work on!')
         return 1
@@ -61,7 +72,7 @@ def main(*input_args):
     
     print(f'Extracting from {deDRMed_azw_file.name}..')
     temp_folder = p / 'temp'
-    run([CALIBRE_PATH, '-x', deDRMed_azw_file, temp_folder])
+    run([config['calibre'], '-x', deDRMed_azw_file, temp_folder])
     if not args.keep:
         # Clean up `images` folder
         for f in (temp_folder / 'images').iterdir():
@@ -116,7 +127,7 @@ def main(*input_args):
 
     if args.compress and has_rar:
         zip_name = new_folder.with_name(new_folder.name + '.rar')
-        run([RAR_PATH, 'a', '-r', '-ep1', '-rr5p', '-m0', zip_name, str(new_folder) + "\\*"])
+        run([config['rar'], 'a', '-r', '-ep1', '-rr5p', '-m0', zip_name, str(new_folder) + "\\*"])
     
     if not args.keep:
         rmtree(temp_folder)
