@@ -37,9 +37,7 @@ def main(*input_args):
     has_rar = True
     if not which(config['rar']):
         input('No WinRAR (Rar.exe) found!')
-        has_rar = True
-
-
+        has_rar = False
 
     p = Path(args.dir)
     if not p.exists():
@@ -50,7 +48,6 @@ def main(*input_args):
 
     azw_files = [f for f in p.iterdir() if (f.suffix.lower() in ['.azw', '.azw3'])]
     azw_files_DeDrmed = [f for f in p.iterdir() if f.name.lower().endswith('_nodrm.azw3')]
-
     deDRM = False
     if len(azw_files) == 0:
         print('No .azw file found!')
@@ -85,9 +82,7 @@ def main(*input_args):
         if deDRM:
             deDRMed_azw_file.unlink() # Remove deDRMed file.
 
-
     res_files = [f for f in p.iterdir() if (f.suffix.lower() in ['.res'])]
-
     if len(res_files) == 1:
 
         print(f'Processing resource file {res_files[0]}..')
