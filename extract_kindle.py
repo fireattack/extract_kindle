@@ -8,7 +8,8 @@ from pathlib import Path
 
 
 DEDRM_PATH = Path(__file__).parent / 'DeDRM_plugin'
-CALIBRE_PATH = 'calibre-debug.exe' # Assuming in path already. R'C:\Program Files (x86)\Calibre2\calibre-debug.exe'
+CALIBRE_PATH = 'calibre-debug.exe' # Assuming in path already. Modify it to yours such as R'C:\Program Files (x86)\Calibre2\calibre-debug.exe'
+RAR_PATH = R'C:\Program Files (x86)\WinRAR\Rar.exe' # Modify it to your Rar.exe. Or replace with 7z (but you also need to replace the arguments)
 KEY = Path(__file__).parent / "kindlekey1.k4i"
 
 def main(*input_args):
@@ -17,12 +18,16 @@ def main(*input_args):
         input('No calibre (calibre-debug.exe) found!')
         return 1
 
+    has_rar = True
+    if not which(RAR_PATH):
+        input('No WinRAR (Rar.exe) found!')
+        has_rar = True
+
     parser = argparse.ArgumentParser()
-    parser.add_argument("filepath")
+    parser.add_argument("filepath", help="choose the folder contains DRMed azw file(s)")
     parser.add_argument("-k", "--keep", action='store_true', help="keep temp and useless files")
-    parser.add_argument("-z", "--compress", action='store_true', help="Compress the files")
-    parser.add_argument("-p", "--pause-at-end", action='store_true', help="pause on error or finish")
-    parser.add_argument("-o", "--output", help="choose save folder")
+    parser.add_argument("-z", "--compress", action='store_true', help="Also compress the files")
+    parser.add_argument("-o", "--output", help="choose output folder")
     args = parser.parse_args(input_args)
 
     p = Path(args.filepath)
@@ -37,11 +42,7 @@ def main(*input_args):
 
     deDRM = False
     if len(azw_files) == 0:
-        errMsg = 'No .azw file found!'
-        if args.pause_at_end:
-            input(errMsg)
-        else:
-            print(errMsg)
+        print('No .azw file found!')
         return 1
     elif len(azw_files_DeDrmed) == 1:
         deDRMed_azw_file = azw_files[0]
@@ -54,12 +55,12 @@ def main(*input_args):
             print('Failed to get key!')
             return 1
         #from DeDRM_plugin_modified.k4mobidedrm import decryptBook
-        #decryptBook(azw_files[0], str(p), ['kindlekey1.k4i'], [], [], [])
-        temp_folder = p / 'temp'
+        #decryptBook(azw_files[0], str(p), ['kindlekey1.k4i'], [], [], [])        
         deDRMed_azw_file = next(f for f in p.iterdir() if f.name.endswith('_nodrm.azw3'))
         deDRM = True # this flags that the deDRMed file is created by ourselves (wasn't there before). So we remove it later.
     
     print(f'Extracting from {deDRMed_azw_file.name}..')
+    temp_folder = p / 'temp'
     run([CALIBRE_PATH, '-x', deDRMed_azw_file, temp_folder])
     if not args.keep:
         # Clean up `images` folder
@@ -113,21 +114,18 @@ def main(*input_args):
     # Easier to recognize which ebook is which after moving/removing the extracted files.
     (p / (title + '.txt')).open('a').close()
 
-    if args.compress:
+    if args.compress and has_rar:
         zip_name = new_folder.with_name(new_folder.name + '.rar')
-        run([R'C:\Program Files (x86)\WinRAR\Rar.exe', 'a', '-r', '-ep1', '-rr5p', '-m0',
-             zip_name, str(new_folder) + "\\*"])
+        run([RAR_PATH, 'a', '-r', '-ep1', '-rr5p', '-m0', zip_name, str(new_folder) + "\\*"])
     
     if not args.keep:
         rmtree(temp_folder)
         if (p / 'azw6_images').exists():
             rmtree(p / 'azw6_images')
 
-    if args.pause_at_end:
-        input('All done!')
+    print('All done!')
 
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    args.extend(['-o', 'G:\\','-z']) # 个人用
     main(*args)
