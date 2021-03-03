@@ -5,11 +5,19 @@ from shutil import rmtree, which, move
 import DumpAZW6_py3
 import argparse
 from pathlib import Path
-import json 
+import json
 
 
 DEDRM_PATH = Path(__file__).parent / 'DeDRM_plugin'
 KEY = Path(__file__).parent / "kindlekey1.k4i"
+
+sys.path.insert(0, str(DEDRM_PATH)) # Does not support Path-like obj
+from k4mobidedrm import decryptBook
+from kindlekey import getkey
+
+# Just for reference, if you want to use them as CLI:
+# run(['py', DEDRM_PATH / 'kindlekey.py', Path(__file__).parent]) -- get key
+# run(['py', DEDRM_PATH / 'k4mobidedrm.py', "-k", KEY, azw_files[0], p]) -- deDRM
 
 def main(*input_args):
     parser = argparse.ArgumentParser()
@@ -57,16 +65,16 @@ def main(*input_args):
     elif len(azw_files) == 1:
         print(f'DeDRMing {azw_files[0].name}..')
         if not KEY.exists():
-            run(['py', DEDRM_PATH / 'kindlekey.py', Path(__file__).parent])
-        run(['py', DEDRM_PATH / 'k4mobidedrm.py', "-k", KEY, azw_files[0], p])
+            getkey(str(Path(__file__).parent))
         if not KEY.exists():
             print('Failed to get key!')
             return 1
-        #from DeDRM_plugin_modified.k4mobidedrm import decryptBook
-        #decryptBook(azw_files[0], str(p), ['kindlekey1.k4i'], [], [], [])        
+
+        decryptBook(azw_files[0], str(p), [str(KEY)], [], [], [])
+
         deDRMed_azw_file = next(f for f in p.iterdir() if f.name.endswith('_nodrm.azw3'))
         deDRM = True # this flags that the deDRMed file is created by ourselves (wasn't there before). So we remove it later.
-    
+
     print(f'Extracting from {deDRMed_azw_file.name}..')
     temp_folder = p / 'temp'
     run([config['calibre'], '-x', deDRMed_azw_file, temp_folder])
@@ -75,7 +83,7 @@ def main(*input_args):
         for f in (temp_folder / 'images').iterdir():
             if f.suffix.lower() in ['.unknown']:
                 print(f'Removing {f}..')
-                f.unlink()                
+                f.unlink()
         imgs = [f for f in (temp_folder / 'images').iterdir() if f.suffix.lower() in ['.jpeg', '.jpg']]
         print(f'Removing {imgs[-1]}..')
         imgs[-1].unlink() # Remove the last image which is always a cover thumbnail.
@@ -105,13 +113,13 @@ def main(*input_args):
 
     for c in '<>:"\/|?*\r\n\t':  # Windows-safe filename
         title = title.replace(c, '_')
-    
-    if args.output: 
+
+    if args.output:
         save_dir = Path(args.output)
         save_dir.mkdir(parents=True, exist_ok=True)
     else:
         save_dir = p
-        
+
     print(f'Moving files to {save_dir}..')
     new_folder = save_dir / title
     move((temp_folder / 'images'), new_folder)
@@ -123,7 +131,7 @@ def main(*input_args):
     if args.compress and has_rar:
         zip_name = new_folder.with_name(new_folder.name + '.rar')
         run([config['rar'], 'a', '-r', '-ep1', '-rr5p', '-m0', zip_name, str(new_folder) + "\\*"])
-    
+
     if not args.keep:
         rmtree(temp_folder)
         if (p / 'azw6_images').exists():
