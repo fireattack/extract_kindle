@@ -39,12 +39,12 @@ def main(*input_args):
         pass
 
     if not which(config['calibre']):
-        input('No calibre (calibre-debug.exe) found!')
+        print('No calibre (calibre-debug.exe) found!')
         return 1
 
     has_rar = True
     if not which(config['rar']):
-        input('No WinRAR (Rar.exe) found!')
+        print('No WinRAR (Rar.exe) found. --compress function disabled.')
         has_rar = False
 
     p = Path(args.dir)
