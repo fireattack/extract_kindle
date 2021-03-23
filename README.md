@@ -12,6 +12,7 @@
 1. Install calibre and edit `config.json`'s calibre key to your `calibre-debug.exe` path
 1. (Optional) install WinRAR and edit `config.json`'s rar key to your `Rar.exe` path
 1. Clone https://github.com/apprenticeharper/DeDRM_tools repo and place "DeDRM_plugin" folder and its content directly into this repo's root folder.
+1. Install pycryptodome (`pip install pycryptodome`)
 
 ## Usage 
 
