@@ -61,7 +61,7 @@ def main(*input_args):
         print('No .azw file found!')
         return 1
     elif len(azw_files_DeDrmed) == 1:
-        deDRMed_azw_file = azw_files[0]
+        deDRMed_azw_file = azw_files_DeDrmed[0]
     elif len(azw_files) == 1:
         print(f'DeDRMing {azw_files[0].name}..')
         if not KEY.exists():
@@ -85,8 +85,11 @@ def main(*input_args):
                 print(f'Removing {f}..')
                 f.unlink()
         imgs = [f for f in (temp_folder / 'images').iterdir() if f.suffix.lower() in ['.jpeg', '.jpg']]
+        # The last image which is always a cover thumbnail. Here just some quick check to make sure. Then remove.
+        assert imgs[-1].stat().st_size <= 50*1024
+        assert int(imgs[-1].stem)  == int(imgs[-2].stem) + 2
         print(f'Removing {imgs[-1]}..')
-        imgs[-1].unlink() # Remove the last image which is always a cover thumbnail.
+        imgs[-1].unlink()
         if deDRM:
             deDRMed_azw_file.unlink() # Remove deDRMed file.
 
