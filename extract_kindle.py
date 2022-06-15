@@ -23,12 +23,12 @@ def main(*input_args):
     parser = argparse.ArgumentParser()
     parser.add_argument("dir", help="choose the folder contains DRMed azw file(s)")
     parser.add_argument("-k", "--keep", action='store_true', help="keep temp and useless files")
-    parser.add_argument("-z", "--compress", action='store_true', help="also compress the files")
+    parser.add_argument("-p", "--postprocessing", action='store_true', help="do some postprocessing with the file.")
     parser.add_argument("-o", "--output", help="output folder (default: same as dir)")
     args = parser.parse_args(input_args)
 
     # load config
-    config = dict(calibre='calibre-debug.exe', rar=R'C:\Program Files (x86)\WinRAR\Rar.exe') # default
+    config = dict(calibre='calibre-debug.exe') # default
     try:
         config_file = Path(__file__).parent / 'config.json'
         if config_file.exists():
@@ -41,11 +41,6 @@ def main(*input_args):
     if not which(config['calibre']):
         print('No calibre (calibre-debug.exe) found!')
         return 1
-
-    has_rar = True
-    if not which(config['rar']):
-        print('No WinRAR (Rar.exe) found. --compress function disabled.')
-        has_rar = False
 
     p = Path(args.dir)
     if not p.exists():
@@ -87,7 +82,7 @@ def main(*input_args):
         imgs = [f for f in (temp_folder / 'images').iterdir() if f.suffix.lower() in ['.jpeg', '.jpg']]
         # The last image which is always a cover thumbnail. Here just some quick check to make sure. Then remove.
         assert imgs[-1].stat().st_size <= 50*1024
-        assert int(imgs[-1].stem)  == int(imgs[-2].stem) + 2
+        # assert int(imgs[-1].stem)  == int(imgs[-2].stem) + 2 # well, sometimes it has some weird GIFs inbetween.. so this isn't reliable.
         print(f'Removing {imgs[-1]}..')
         imgs[-1].unlink()
         if deDRM:
@@ -131,9 +126,15 @@ def main(*input_args):
     # Easier to recognize which ebook is which after moving/removing the extracted files.
     (p / (title + '.txt')).open('a').close()
 
-    if args.compress and has_rar:
-        zip_name = new_folder.with_name(new_folder.name + '.rar')
-        run([config['rar'], 'a', '-r', '-ep1', '-rr5p', '-m0', zip_name, str(new_folder) + "\\*"])
+    if args.postprocessing:
+        cmd = config['postprocessing']
+        cmd = cmd.replace('$o', str(save_dir))
+        cmd = cmd.replace('$p', str(new_folder))
+        cmd = cmd.replace('$f', new_folder.name)
+        run(cmd)
+    # if
+        # zip_name = new_folder.with_name(new_folder.name + '.rar')
+        # run([config['rar'], 'a', '-r', '-ep1', '-rr5p', '-m0', '-ma4', zip_name, str(new_folder) + "\\*"])
 
     if not args.keep:
         rmtree(temp_folder)

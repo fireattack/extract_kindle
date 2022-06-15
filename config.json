@@ -1,4 +1,4 @@
 {
     "calibre": "calibre-debug.exe",
-    "rar": "C:\\Program Files\\WinRAR\\Rar.exe"
+    "postprocessing": "\"C:\\Program Files\\WinRAR\\Rar.exe\" a -r -ep1 -rr5p -m0 -ma4 \"$o\\$f.rar\" \"$p\\*\""
 }

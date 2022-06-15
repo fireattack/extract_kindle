@@ -10,14 +10,14 @@
 
 1. Clone the repo.
 1. Install calibre and edit `config.json`'s calibre key to your `calibre-debug.exe` path
-1. (Optional) install WinRAR and edit `config.json`'s rar key to your `Rar.exe` path
+1. (Optional) create some post-prosssing command and put into `config.json`'s `postprocessing` key. Remember to add quotes and escape special characters if needed! You can check the sample config.json to get an idea.
 1. Clone https://github.com/apprenticeharper/DeDRM_tools repo and place "DeDRM_plugin" folder and its content directly into this repo's root folder.
 1. Install pycryptodome (`pip install pycryptodome`)
 
-## Usage 
+## Usage
 
 ```
-usage: extract_kindle.py [-h] [-k] [-z] [-o OUTPUT] dir
+usage: extract_kindle.py [-h] [-k] [-p] [-o OUTPUT] dir
 
 positional arguments:
   dir                   choose the folder contains DRMed azw file(s)
@@ -25,7 +25,7 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   -k, --keep            keep temp and useless files
-  -z, --compress        also compress the files
+  -p, --postprocessing  do some postprocessing with the file.
   -o OUTPUT, --output OUTPUT
                         output folder (default: same as dir)
 ```
@@ -33,11 +33,17 @@ optional arguments:
 Examples:
 
 ```
-extract_kindle.py "G:\_temp\My Kindle Content\B00KYFFDV2_EBOK" -o "D:\output" -z
+extract_kindle.py "G:\_temp\My Kindle Content\B00KYFFDV2_EBOK" -o "D:\output" -p
 extract_kindle.py "G:\_temp\My Kindle Content\B00KYFFDV2_EBOK"
 ```
 
-You can also use it as a module by something like 
+You can also use it as a module by something like
 ```py
-extract_kindle.main(R"G:\_temp\My Kindle Content\B00KYFFDV2_EBOK", "-o", "D:\\output", "-z")
+extract_kindle.main(R"G:\_temp\My Kindle Content\B00KYFFDV2_EBOK", "-o", "D:\\output", "-p")
 ```
+
+## Post-processing format
+
+* $o: output root path (i.e. -o parameter)
+* $f: book name string (path-safe, extracted from Kindle info)
+* $p: full path of the folder contains the image files (basically, $o/$f)
