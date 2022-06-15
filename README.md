@@ -42,7 +42,9 @@ You can also use it as a module by something like
 extract_kindle.main(R"G:\_temp\My Kindle Content\B00KYFFDV2_EBOK", "-o", "D:\\output", "-p")
 ```
 
-## Post-processing format
+## Post-processing template string substitution
+
+Remember to add quotes around them if needed!
 
 * $o: output root path (i.e. -o parameter)
 * $f: book name string (path-safe, extracted from Kindle info)
