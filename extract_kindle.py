@@ -9,7 +9,6 @@ import json
 
 
 DEDRM_PATH = Path(__file__).parent / 'DeDRM_plugin'
-KEY = Path(__file__).parent / "kindlekey1.k4i"
 
 sys.path.insert(0, str(DEDRM_PATH)) # Does not support Path-like obj
 from k4mobidedrm import decryptBook
@@ -27,24 +26,32 @@ def main(*input_args):
     parser.add_argument("-o", "--output", help="output folder (default: same as dir)")
     args = parser.parse_args(input_args)
 
+    keyfile = Path(__file__).parent / "kindlekey1.k4i"
+
     # load config
-    config = dict(calibre='calibre-debug.exe') # default
     try:
+        # default config
+        config = dict(calibre="calibre-debug.exe", postprocessing=None)
         config_file = Path(__file__).parent / 'config.json'
         if config_file.exists():
             with config_file.open('r', encoding='utf-8') as f:
                 config = json.load(f)
-            print('Loaded config from config.json')
+            print('Loaded config from config.json.')
+        else:
+            # generate default config.json
+            print('No config.json found, create one...')
+            with config_file.open('w', encoding='utf8') as f:
+                json.dump(config, f, ensure_ascii=False, indent=2)
     except:
         pass
 
     if not which(config['calibre']):
-        print('No calibre (calibre-debug.exe) found!')
+        print('ERROR: no calibre (calibre-debug.exe) found!')
         return 1
 
     p = Path(args.dir)
     if not p.exists():
-        print('Please provide a path to work on!')
+        print('ERROR: please provide a path to work on!')
         return 1
 
     print(f'Folder: {p}')
@@ -53,19 +60,19 @@ def main(*input_args):
     azw_files_DeDrmed = [f for f in p.iterdir() if f.name.lower().endswith('_nodrm.azw3')]
     deDRM = False
     if len(azw_files) == 0:
-        print('No .azw file found!')
+        print('ERROR: no .azw file found!')
         return 1
     elif len(azw_files_DeDrmed) == 1:
         deDRMed_azw_file = azw_files_DeDrmed[0]
     elif len(azw_files) == 1:
         print(f'DeDRMing {azw_files[0].name}..')
-        if not KEY.exists():
+        if not keyfile.exists():
             getkey(str(Path(__file__).parent))
-        if not KEY.exists():
-            print('Failed to get key!')
+        if not keyfile.exists():
+            print('ERROR: failed to get key!')
             return 1
 
-        decryptBook(azw_files[0], str(p), [str(KEY)], [], [], [])
+        decryptBook(azw_files[0], str(p), [str(keyfile)], [], [], [])
 
         deDRMed_azw_file = next(f for f in p.iterdir() if f.name.endswith('_nodrm.azw3'))
         deDRM = True # this flags that the deDRMed file is created by ourselves (wasn't there before). So we remove it later.
@@ -127,14 +134,14 @@ def main(*input_args):
     (p / (title + '.txt')).open('a').close()
 
     if args.postprocessing:
-        cmd = config['postprocessing']
-        cmd = cmd.replace('$o', str(save_dir))
-        cmd = cmd.replace('$p', str(new_folder))
-        cmd = cmd.replace('$f', new_folder.name)
-        run(cmd)
-    # if
-        # zip_name = new_folder.with_name(new_folder.name + '.rar')
-        # run([config['rar'], 'a', '-r', '-ep1', '-rr5p', '-m0', '-ma4', zip_name, str(new_folder) + "\\*"])
+        if not config['postprocessing']:
+            print('ERROR: postprocessing is enabled but no command is given.')
+        else:
+            cmd = config['postprocessing']
+            cmd = cmd.replace('$o', str(save_dir))
+            cmd = cmd.replace('$p', str(new_folder))
+            cmd = cmd.replace('$f', new_folder.name)
+            run(cmd, shell=True) # use shell=True for cmd in string is recommended, otherwise it doesn't work with *nix
 
     if not args.keep:
         rmtree(temp_folder)
