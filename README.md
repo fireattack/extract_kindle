@@ -10,7 +10,7 @@
 
 1. Download newest release and uncompress.
 1. Install calibre, and edit `config.json`'s calibre key to your `calibre-debug.exe` path.
-1. (Optional) create some post-prosssing command and put into `config.json`'s `postprocessing` key. Remember to add quotes and escape special characters if needed! You can check the sample config.json to get an idea.
+1. (Optional) create some post-prosssing command and put into `config.json`'s `postprocessing` key. Remember to add quotes and escape special characters if needed! You can check the example `config-example.json` to get an idea.
 1. Install Python3, and then pycryptodome (`pip install pycryptodome`)
 
 ### From source
