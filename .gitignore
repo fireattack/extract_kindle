@@ -28,3 +28,8 @@
 
 # ignore python cache files
 __pycache__/
+
+config.json
+keys.txt
+minidump
+*.DMP
