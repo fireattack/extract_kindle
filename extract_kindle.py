@@ -50,6 +50,7 @@ class KindleExtractor:
         ]:
             if p.exists():
                 config_file = Path(p)
+                print(f"Using config file: {config_file}")
                 break
         if not config_file.exists():
             config_file = Path.home() / '.extract_kindle_config.json'
@@ -68,7 +69,7 @@ class KindleExtractor:
             self.key_file = data.get('key_file', 'keys.txt')
             self.dump_file = data.get('dump_file', 'minidump')
             self.kindle_content_dir = data.get('kindle_content_dir')
-            self.kindle_path = data.get('kindle_path') # this one is optional
+            self.kindle_dir = data.get('kindle_dir') # this one is optional
 
     def batch_decrypt(self):
         '''Decrypt all books in the My Kindle Content folder'''
@@ -121,8 +122,8 @@ class KindleExtractor:
         '''Get keys using KRFKeyExtractor.exe'''
         if dump_file is None:
             dump_file = self.dump_file
-        kindle_path = Path(self.kindle_path) if self.kindle_path else Path.home() / 'AppData/Local/Amazon/Kindle/application'
-        KRFKeyExtractor = kindle_path / 'KRFKeyExtractor.exe'
+        kindle_dir = Path(self.kindle_dir) if self.kindle_dir else Path.home() / 'AppData/Local/Amazon/Kindle/application'
+        KRFKeyExtractor = kindle_dir / 'KRFKeyExtractor.exe'
         if not KRFKeyExtractor.exists():
             raise(f"KRFKeyExtractor not found at {KRFKeyExtractor}.")
         output = subprocess.check_output([KRFKeyExtractor, dump_file, self.kindle_content_dir, self.key_file],
@@ -145,7 +146,9 @@ class KindleExtractor:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('command', nargs='?')
+    parser.add_argument('command', nargs='?',
+                        help='Command to run: "init <dumpfile>" to initialize, or path to a book folder to decrypt. '
+                        'If no command is given, decrypt all books in the My Kindle Content folder.')
     parser.add_argument('args', nargs='*')
     parser.add_argument('-O', '--outdir', default='.', help='Output directory for decrypted books')
     args = parser.parse_args()
@@ -157,7 +160,7 @@ if __name__ == '__main__':
         extractor.get_keys()
         extractor.batch_decrypt()
     elif args.command == 'init':
-        assert len(args.args) == 1, "Usage: testbatch.py init <dumpfile>"
+        assert len(args.args) == 1, f"Usage: {Path(__file__).name} init <dumpfile>"
         extractor.get_keys(dump_file=args.args[0])
     else:
         indir = Path(args.command)
