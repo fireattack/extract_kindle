@@ -145,12 +145,18 @@ class KindleExtractor:
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('command', nargs='?',
-                        help='Command to run: "init <dumpfile>" to initialize, or path to a book folder to decrypt. '
-                        'If no command is given, decrypt all books in the My Kindle Content folder.')
-    parser.add_argument('args', nargs='*')
-    parser.add_argument('-O', '--outdir', default='.', help='Output directory for decrypted books')
+    parser = argparse.ArgumentParser(
+        description='Extracts and decrypts Kindle books.',
+        formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument('command', nargs='?', metavar='COMMAND',
+                        help='''Optional command to execute:
+    (no command)       - Decrypt all books in 'My Kindle Content' folder.
+    init <dumpfile>    - Initialize and save keys from a Kindle dump file. The <dumpfile> path is required.
+    <book_folder_path> - Decrypt a specific book from its folder path.''')
+    parser.add_argument('args', nargs='*', metavar='ARGUMENTS',
+                        help='Additional arguments for the command (e.g., <dumpfile> for "init")')
+    parser.add_argument('-O', '--outdir', default='.', metavar='DIRECTORY',
+                        help='Output directory for decrypted books (default: current directory)')
     args = parser.parse_args()
 
     extractor = KindleExtractor(args.outdir)

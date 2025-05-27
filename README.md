@@ -20,8 +20,8 @@ The original python code has be dramatically simplified by removing all kinds of
 1. Clone the repository.
 2. Install the required dependencies using `pip install -r requirements.txt`.
 3. Download `KRFKeyExtractor.exe` from [Satsuoni's DeDRM_tools repository](https://github.com/Satsuoni/DeDRM_tools/releases/tag/v10.0.10) and place it in the same directory as `kindle.exe` (by default, it's in `%localappdata%\Amazon\Kindle\application\`).
-4. Run Kindle application, and create dump file by Task Manager -> Details -> Right click on `kindle.exe` -> Create dump file.
-5. Run the script `python extract_kindle.py init <dump_file>` to initialize the configuration and create a minidump file for future use. Afterwards, you can delete the original dump file to save space.
+4. Run Kindle application, download a few books (important), and create dump file by Task Manager -> Details -> Right click on `kindle.exe` -> Create dump file.
+5. Run the script `python extract_kindle.py init <dump_file>` to initialize the configuration and create a minidump file for future use. Afterwards, you can delete the original dump file to save space. The saved minidump file (it's a text file, open it in editor) should have at least one non-zero "Working secret". If not, you probably want to download more books and try it again.
 6. Check the generated `config.json` file and make necessary adjustments (e.g. move keys.txt and minidump files to a more suitable location). The `config.json` file contains the following keys:
     - `dump_file`: Path to the dump file.
     - `keys_file`: Path to the keys file.
@@ -32,14 +32,19 @@ The original python code has be dramatically simplified by removing all kinds of
 
 
 ```
-usage: extract_kindle.py [-h] [-O OUTDIR] [command] [args ...]
+usage: extract_kindle.py [-h] [-O DIRECTORY] [COMMAND] [ARGUMENTS ...]
+
+Extracts and decrypts Kindle books.
 
 positional arguments:
-  command
-  args
+  COMMAND               Optional command to execute:
+                            (no command)       - Decrypt all books in 'My Kindle Content' folder.
+                            init <dumpfile>    - Initialize and save keys from a Kindle dump file. The <dumpfile> path is required.
+                            <book_folder_path> - Decrypt a specific book from its folder path.
+  ARGUMENTS             Additional arguments for the command (e.g., <dumpfile> for "init")
 
 options:
   -h, --help            show this help message and exit
-  -O OUTDIR, --outdir OUTDIR
-                        Output directory for decrypted books
+  -O DIRECTORY, --outdir DIRECTORY
+                        Output directory for decrypted books (default: current directory)
 ```
