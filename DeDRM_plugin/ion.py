@@ -1338,6 +1338,12 @@ class DrmIonVoucher(object):
         addprottable(self.envelope)
 
     def decryptvoucher(self):
+        if self.secretkeycandidate is not None:
+            print("Using secret key candidate for decryption")
+            self.secretkey = self.secretkeycandidate
+            self.drmkey = None
+            return
+
         shared = ("PIDv3" + self.encalgorithm + self.enctransformation + self.hashalgorithm).encode('ASCII')
 
         self.lockparams.sort()
