@@ -71,15 +71,18 @@ class KindleExtractor:
             self.kindle_content_dir = data.get('kindle_content_dir')
             self.kindle_dir = data.get('kindle_dir') # this one is optional
 
-    def batch_decrypt(self):
+    def batch_decrypt(self, force=False):
         '''Decrypt all books in the My Kindle Content folder'''
         for folder in Path(self.kindle_content_dir).iterdir():
             if folder.name == 'NoteDocuments' or not folder.is_dir():
                 continue
-            txt_fies = list(folder.glob("*.txt"))
-            if len(txt_fies) == 1:
-                print(f'Skip already extracted: [{folder.name}] {txt_fies[0].stem}')
-                continue
+            if force:
+                pass
+            else:
+                txt_fies = list(folder.glob("*.txt"))
+                if len(txt_fies) == 1:
+                    print(f'Skip already extracted: [{folder.name}] {txt_fies[0].stem}')
+                    continue
             self.decrypt_book(folder)
 
     def decrypt_book(self, indir):
@@ -157,6 +160,8 @@ if __name__ == '__main__':
                         help='Additional arguments for the command (e.g., <dumpfile> for "init")')
     parser.add_argument('-O', '--outdir', default='.', metavar='DIRECTORY',
                         help='Output directory for decrypted books (default: current directory)')
+    parser.add_argument('-f', '--force', action='store_true',
+                        help='Force decryption even if the book is already decrypted')
     args = parser.parse_args()
 
     extractor = KindleExtractor(args.outdir)
@@ -164,7 +169,7 @@ if __name__ == '__main__':
     if args.command is None:
         print('Decrypting all the books in the My Kindle Content folder')
         extractor.get_keys()
-        extractor.batch_decrypt()
+        extractor.batch_decrypt(force=args.force)
     elif args.command == 'init':
         assert len(args.args) == 1, f"Usage: {Path(__file__).name} init <dumpfile>"
         extractor.get_keys(dump_file=args.args[0])
