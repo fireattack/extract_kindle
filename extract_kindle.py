@@ -1,12 +1,11 @@
 import argparse
-import os
+import json
+import subprocess
 import tempfile
 import time
 import traceback
 import zipfile
 from pathlib import Path
-import subprocess
-import json
 
 from DeDRM_plugin.k4mobidedrm import GetDecryptedBook
 from KFX_Input.kfxlib import YJ_Book
@@ -87,8 +86,8 @@ class KindleExtractor:
 
     def decrypt_book(self, indir):
         indir = Path(indir)
-        with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as temp_zip:
-            temp_zip = temp_zip.name
+        with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as f:
+            temp_zip = Path(f.name)
         try:
             with zipfile.ZipFile(temp_zip, 'w', zipfile.ZIP_DEFLATED) as zf:
                 for file_path in indir.rglob('*'):
@@ -103,22 +102,21 @@ class KindleExtractor:
                 print("Error decrypting book after {1:.1f} seconds: {0}".format(e.args[0], time.time()-starttime))
                 traceback.print_exc()
                 return 1
-            infile_path = Path(temp_zip)
-            temp_nodrm_file = infile_path.with_name(infile_path.stem + '_nodrm' + book.getBookExtension())
+            temp_nodrm_file = temp_zip.with_name(temp_zip.stem + '_nodrm' + book.getBookExtension())
             book.getFile(temp_nodrm_file)
             print("Saved decrypted book {1:s} after {0:.1f} seconds".format(time.time()-starttime, temp_nodrm_file.name))
             book.cleanup()
         finally:
             try:
-                os.unlink(temp_zip)
+                temp_zip.unlink()
             except FileNotFoundError:
                 pass
         _, outfile = convert_to_cbz(temp_nodrm_file, self.outdir)
         try:
-            os.unlink(temp_nodrm_file)
+            temp_nodrm_file.unlink()
         except FileNotFoundError:
             pass
-        # create a empty text file in the dir to make it as processed
+        # create a empty text file in the dir to mark it as processed
         (indir / (outfile.stem + '.txt')).touch()
 
     def get_keys(self, dump_file=None):
