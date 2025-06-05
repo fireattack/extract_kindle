@@ -41,34 +41,42 @@ class KindleExtractor:
 
     def _load_config(self):
         config_file = None
-        for p in [
-            Path(__file__).parent / 'config.json',
+        for f in [
             Path('config.json'),
-            self.outdir / 'config.json',
+            Path(__file__).parent / 'config.json',
             Path.home() / '.extract_kindle_config.json'
         ]:
-            if p.exists():
-                config_file = Path(p)
-                print(f"Using config file: {config_file}")
+            if f.exists():
+                config_file = f
+                print(f"Using config file found: {config_file.resolve()}")
                 break
-        if not config_file.exists():
-            config_file = Path.home() / '.extract_kindle_config.json'
+        if not config_file:
             print(f"Config file {config_file} not found. Creating a default one...")
+            config_file = Path('config.json')
+            default_kindle_content_dir = Path.home() / 'Documents' / 'My Kindle Content'
             default_config = {
                 'key_file': 'keys.txt',
                 'dump_file': 'minidump',
-                'kindle_content_dir': str(Path.home() / 'Documents' / 'My Kindle Content'),
+                'kindle_content_dir': str(default_kindle_content_dir),
             }
-            with config_file.open('w') as f:
+            with config_file.open('w', encoding='utf8') as f:
                 json.dump(default_config, f, indent=4)
             print(f"Created default config file at {config_file}")
+            if not default_kindle_content_dir.exists():
+                print(f'My Kindle Content folder not found at default path ({default_kindle_content_dir.resolve()}).'
+                      '\nPlease manually set it in the config file and re-run the command.')
+                quit(1)
 
-        with config_file.open('r') as f:
+        with config_file.open('r', encoding='utf8') as f:
             data = json.load(f)
-            self.key_file = data.get('key_file', 'keys.txt')
-            self.dump_file = data.get('dump_file', 'minidump')
-            self.kindle_content_dir = data.get('kindle_content_dir')
+        try:
+            self.key_file = data['key_file']
+            self.dump_file = data['dump_file']
+            self.kindle_content_dir = data['kindle_content_dir']
             self.kindle_dir = data.get('kindle_dir') # this one is optional
+        except KeyError as e:
+            print(f"Missing key in config file: {e}. Please check the config file.")
+            quit(1)
 
     def batch_decrypt(self, force=False):
         '''Decrypt all books in the My Kindle Content folder'''
@@ -127,8 +135,12 @@ class KindleExtractor:
         KRFKeyExtractor = kindle_dir / 'KRFKeyExtractor.exe'
         if not KRFKeyExtractor.exists():
             raise(f"KRFKeyExtractor not found at {KRFKeyExtractor}.")
-        output = subprocess.check_output([KRFKeyExtractor, dump_file, self.kindle_content_dir, self.key_file],
-                                         stderr=subprocess.STDOUT, text=True)
+        process = subprocess.run([KRFKeyExtractor, dump_file, self.kindle_content_dir, self.key_file], stderr=subprocess.STDOUT, text=True)
+        if process.returncode != 0:
+            print(f"Error running KRFKeyExtractor:\n{process.stdout}")
+            raise RuntimeError("KRFKeyExtractor failed")
+
+        output = process.stdout.strip()
         if dump_file != self.dump_file:
             # If we're using the full dump, save the output to a minidump file for later use
             lines = output.split('\n')
@@ -139,9 +151,15 @@ class KindleExtractor:
                     break
             if note_index != -1:
                 minidump_content = '\n'.join(lines[note_index + 1:])
+                print('Found the following minidump content:')
+                print('-' * 20)
+                print(minidump_content)
+                print('-' * 20)
                 with open(self.dump_file, 'w', encoding='utf-8') as f:
                     f.write(minidump_content)
                 print(f"Save minidump to {self.dump_file}")
+            else:
+                raise('No valid minidump content found in the output. Something went wrong with KRFKeyExtractor. Please check the output:\n' + output)
         print(f"Keys saved to {self.key_file}")
 
 
