@@ -18,20 +18,22 @@ def sanitize(name):
     return name
 
 
-def convert_to_cbz(infile, outdir):
+def convert_to_zip(infile, outdir):
     book = YJ_Book(str(infile))
     book.decode_book(retain_yj_locals=True)
     book_title = book.get_yj_metadata_from_book().title
     print(f'Book title: {book_title}')
     outfile = Path(outdir) / sanitize(f'{book_title}.zip')
     if book.is_image_based_fixed_layout:
-        cbz_data = book.convert_to_cbz()
-        with outfile.open('wb') as f:
-            f.write(cbz_data)
+        binary_data = book.convert_to_cbz()
         print(f"Converted book images to CBZ file {outfile}")
-        return book_title, outfile
     else:
-        raise ("Book format does not support CBZ conversion - must be image based fixed-layout")
+        print("Book format does not support CBZ conversion, convert to unpacked ZIP instead.")
+        binary_data = book.convert_to_zip_unpack()
+
+    with outfile.open('wb') as f:
+        f.write(binary_data)
+    return book_title, outfile
 
 
 class KindleExtractor:
@@ -119,7 +121,7 @@ class KindleExtractor:
                 temp_zip.unlink()
             except FileNotFoundError:
                 pass
-        _, outfile = convert_to_cbz(temp_nodrm_file, self.outdir)
+        _, outfile = convert_to_zip(temp_nodrm_file, self.outdir)
         try:
             temp_nodrm_file.unlink()
         except FileNotFoundError:
@@ -135,7 +137,7 @@ class KindleExtractor:
         KRFKeyExtractor = kindle_dir / 'KRFKeyExtractor.exe'
         if not KRFKeyExtractor.exists():
             raise(f"KRFKeyExtractor not found at {KRFKeyExtractor}.")
-        process = subprocess.run([KRFKeyExtractor, dump_file, self.kindle_content_dir, self.key_file], stderr=subprocess.STDOUT, text=True)
+        process = subprocess.run([KRFKeyExtractor, dump_file, self.kindle_content_dir, self.key_file], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         if process.returncode != 0:
             print(f"Error running KRFKeyExtractor:\n{process.stdout}")
             raise RuntimeError("KRFKeyExtractor failed")
