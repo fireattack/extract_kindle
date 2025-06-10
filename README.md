@@ -21,7 +21,7 @@ The original python code has be dramatically simplified by removing all kinds of
 
 2. Install the required dependencies using `pip install -r requirements.txt`.
 
-3. Download `KRFKeyExtractor.exe` from [Satsuoni's DeDRM_tools repository](https://github.com/Satsuoni/DeDRM_tools/releases/tag/v10.0.10) and place it in the same directory as `kindle.exe` (by default, it's in `%localappdata%\Amazon\Kindle\application\`).
+3. Download `KRFKeyExtractor.exe` from [Satsuoni's DeDRM_tools repository's release page](https://github.com/Satsuoni/DeDRM_tools/releases) (find the latest pre-release DeDRM_tools.zip. The current one is [here](https://github.com/Satsuoni/DeDRM_tools/releases/download/v10.0.11/DeDRM_tools.zip).) and place it in the same directory as `kindle.exe` (by default, it's in `%localappdata%\Amazon\Kindle\application\`).
 
 4. Run Kindle application, download a few books (important), and create dump file by Task Manager -> Details -> Right click on `kindle.exe` -> Create dump file. Mark the file path.
 

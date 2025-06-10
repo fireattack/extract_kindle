@@ -134,15 +134,19 @@ class KindleExtractor:
         if dump_file is None:
             dump_file = self.dump_file
         kindle_dir = Path(self.kindle_dir) if self.kindle_dir else Path.home() / 'AppData/Local/Amazon/Kindle/application'
+        if not kindle_dir.exists():
+            raise FileNotFoundError(f"Kindle directory {kindle_dir} does not exist. Please set it in the config file with 'kindle_dir' key.")
         KRFKeyExtractor = kindle_dir / 'KRFKeyExtractor.exe'
         if not KRFKeyExtractor.exists():
-            raise(f"KRFKeyExtractor not found at {KRFKeyExtractor}.")
-        process = subprocess.run([KRFKeyExtractor, dump_file, self.kindle_content_dir, self.key_file], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            raise FileNotFoundError(f"KRFKeyExtractor.exe not found in {kindle_dir}. Please put the executable in the correct directory.")
+        print('Running KRFKeyExtractor to extract keys from the Kindle dump file...')
+        process = subprocess.run([KRFKeyExtractor, dump_file, self.kindle_content_dir, self.key_file],
+                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        output = process.stdout.strip()
         if process.returncode != 0:
-            print(f"Error running KRFKeyExtractor:\n{process.stdout}")
+            print(f"Error running KRFKeyExtractor:\n{output}")
             raise RuntimeError("KRFKeyExtractor failed")
 
-        output = process.stdout.strip()
         if dump_file != self.dump_file:
             # If we're using the full dump, save the output to a minidump file for later use
             lines = output.split('\n')
