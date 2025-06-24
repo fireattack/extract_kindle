@@ -88,14 +88,15 @@ class KindleExtractor:
             if force:
                 pass
             else:
-                txt_fies = list(folder.glob("*.txt"))
-                if len(txt_fies) == 1:
-                    print(f'Skip already extracted: [{folder.name}] {txt_fies[0].stem}')
+                text_files = list(folder.glob("*.txt"))
+                if len(text_files) == 1:
+                    print(f'Skip already extracted: [{folder.name}] {text_files[0].stem}')
                     continue
             self.decrypt_book(folder)
 
     def decrypt_book(self, indir):
         indir = Path(indir)
+        print(f'Processing {indir}...')
         with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as f:
             temp_zip = Path(f.name)
         try:
